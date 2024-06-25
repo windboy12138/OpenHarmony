@@ -1,0 +1,49 @@
+{
+  "app": {
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "app",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS"
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ],
+    "signingConfigs": [
+      {
+        "name": "app",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\wangxiaohui14\\.ohos\\config\\app_hirtc_camera_native_HCjDhAroc-6fZkgB1H7yG2gBJBzAui2eKY3040g_dHM=.cer",
+          "storePassword": "0000001B7208F696BE9D58A77EF40A80778CE8E4157680D5EB323CD05580280D560A585846E15A231CDC7C",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B595E4197D7799010C91438C0249E5C7C055270DE5422CD783C2D8809E2AA8BCDB162C531664DAE",
+          "profile": "C:\\Users\\wangxiaohui14\\.ohos\\config\\app_hirtc_camera_native_HCjDhAroc-6fZkgB1H7yG2gBJBzAui2eKY3040g_dHM=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\wangxiaohui14\\.ohos\\config\\app_hirtc_camera_native_HCjDhAroc-6fZkgB1H7yG2gBJBzAui2eKY3040g_dHM=.p12"
+        }
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
