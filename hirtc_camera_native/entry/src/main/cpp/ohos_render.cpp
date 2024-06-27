@@ -137,8 +137,8 @@ namespace ohos {
     {
         // 设置 OHNativeWindowBuffer 的宽高
         int32_t code = SET_BUFFER_GEOMETRY;
-        int32_t width = 1920;
-        int32_t height = 1080;
+        int32_t width = 1080;
+        int32_t height = 1920;
         // 这里的nativeWindow是从上一步骤中的回调函数中获得的
         int32_t ret = OH_NativeWindow_NativeWindowHandleOpt(nativeWindow, code, width, height);
     
@@ -148,15 +148,16 @@ namespace ohos {
     
         OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "set window format=%{public}d", ret);
     
-        code = SET_STRIDE;
-        int32_t stride = 1080;
-//         ret = OH_NativeWindow_NativeWindowHandleOpt(nativeWindow, code, stride);
-        OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "SET_STRIDE=%{public}d", ret);
-    
         code = SET_TRANSFORM;
-        int32_t transform = NATIVEBUFFER_ROTATE_270;
+        int32_t transform = NATIVEBUFFER_ROTATE_NONE;
         ret = OH_NativeWindow_NativeWindowHandleOpt(nativeWindow, code, transform);
         OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "SET_TRANSFORM=%{public}d", ret);
+        
+        // SET_STRIDE will cause unknown error when OH_NativeWindow_NativeWindowRequestBuffer
+//         code = SET_STRIDE;
+//         int32_t stride = 1920;
+//         ret = OH_NativeWindow_NativeWindowHandleOpt(nativeWindow, code, &stride);
+//         OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "SET_STRIDE=%{public}d", ret);
         
         native_window_ = nativeWindow;
     }
@@ -166,8 +167,14 @@ namespace ohos {
         OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "ohosRender::OnFrame");
         OHNativeWindowBuffer* buffer = nullptr;
         int fenceFd;
+        int32_t ret = -1;
         // 通过 OH_NativeWindow_NativeWindowRequestBuffer 获取 OHNativeWindowBuffer 实例
-        OH_NativeWindow_NativeWindowRequestBuffer(native_window_, &buffer, &fenceFd);
+        ret = OH_NativeWindow_NativeWindowRequestBuffer(native_window_, &buffer, &fenceFd);
+        if (ret != 0)
+        {
+            OH_LOG_Print(LOG_APP, LOG_ERROR, LOG_DOMAIN, "mytest", "OH_NativeWindow_NativeWindowRequestBuffer failed, ret=%{public}d", ret);
+            return;
+        }
         // 通过 OH_NativeWindow_GetBufferHandleFromNative 获取 buffer 的 handle
         BufferHandle* bufferHandle = OH_NativeWindow_GetBufferHandleFromNative(buffer);
 
@@ -177,6 +184,9 @@ namespace ohos {
         if (mappedAddr == MAP_FAILED) {
             // mmap failed
         }
+    
+        OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "OnFrame::buffer width=%{public}d, height=%{public}d, stride=%{public}d, size=%{public}d", 
+    bufferHandle->width, bufferHandle->height, bufferHandle->stride, bufferHandle->size);
     
 //         static uint32_t value = 0x00CBC0FF;
 //         value++;
@@ -188,9 +198,32 @@ namespace ohos {
 //         }
         uint8_t *pixel = static_cast<uint8_t *>(mappedAddr);
         uint8_t *src_data = static_cast<uint8_t *>(data);
-        for (uint32_t i = 0; i < size; i++)
+//         for (uint32_t i = 0; i < size; i++)
+//         {
+//             *pixel++ = *src_data++;
+//         }
+        int byte_align = bufferHandle->stride - stride;
+        for (uint32_t i = 0; i < height; i++)
         {
-            *pixel++ = *src_data++;
+            uint8_t* pos = pixel + i * bufferHandle->stride;
+            for (uint32_t j = 0; j < stride; j++)
+            {
+                *pos++ = *src_data++;
+            }
+        }
+        
+        for (uint32_t i = 0; i < height / 2; i++)
+        {
+            uint8_t* pos = pixel + (i + height) * bufferHandle->stride;
+            for (uint32_t j = 0; j < stride / 2; j++)
+            {
+                *pos++ = *src_data++;
+            }
+            pos += byte_align / 2;
+            for (uint32_t j = 0; j < stride / 2; j++)
+            {
+                *pos++ = *src_data++;
+            }
         }
     
         // 设置刷新区域，如果Region中的Rect为nullptr,或者rectNumber为0，则认为OHNativeWindowBuffer全部有内容更改。

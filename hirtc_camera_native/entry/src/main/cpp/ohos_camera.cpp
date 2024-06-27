@@ -7,6 +7,7 @@
 // #include "api/video/i420_buffer.h"
 // #include "api/video/video_rotation.h"
 #include "libyuv/convert.h"
+#include "libyuv/rotate.h"
 // #include "rtc_base/time_utils.h"
 #include "hilog/log.h"
 #include <arm-linux-ohos/bits/alltypes.h>
@@ -236,6 +237,15 @@ int32_t OhosCamera::InitCamera() {
     
     OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest",
                      "OH_CameraManager_GetSupportedCameras count = %{public}d", cameras_size_);
+    
+    for (int i = 0; i < cameras_size_; i++){
+        char *id = cameras_[i].cameraId;
+        int32_t pos = cameras_[i].cameraPosition;
+        int32_t type = cameras_[i].cameraType;
+        int32_t conn = cameras_[i].connectionType;
+        OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest",
+                     "camera index=%{public}d, id=%{public}s, pos=%{public}d, type=%{public}d, conn=%{public}d", i, id, pos, type, conn);
+    }
     
     ret = OH_CameraManager_GetSupportedCameraOutputCapability(camera_manager_, &cameras_[camera_dev_index_],
                                                               &camera_output_capability_);
@@ -598,14 +608,19 @@ bool OhosCamera::ImageReceiverOn(uint8_t *buffer, int32_t width, int32_t height,
     
     OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "NV21ToI420 res=%{public}d", res);
     
-//     libyuv::I420Rotate(i420_buffer, width, i420_u, width / 2, i420_v, width / 2, )
+    uint8_t* i420_data = new uint8_t[size];
+    uint8_t* i420_data_u = i420_data + height * width;
+    uint8_t* i420_data_v = i420_data_u + width * height / 4;
+    libyuv::I420Rotate(i420_buffer, width, i420_u, width / 2, i420_v, width / 2, 
+    i420_data, height, i420_data_u, height / 2, i420_data_v, height / 2,
+    width, height, libyuv::kRotate90);
     
 //     uint8_t* bgra_buffer = new uint8_t[width * height * 4];
 //     res = libyuv::I420ToARGB(i420_buffer, width, i420_u, width / 2, i420_v, width / 2, bgra_buffer, width * 4, width, height);
     
     {
         std::lock_guard<std::mutex> lock(render_lock);
-        buffers_.push(i420_buffer);
+        buffers_.push(i420_data);
     }
     
 //     if (ohos_render_)
@@ -634,7 +649,7 @@ bool OhosCamera::ImageReceiverOn(uint8_t *buffer, int32_t width, int32_t height,
 //     data_callback_->OnFrame(video_frame);
 //   }
 //     delete[] bgra_buffer;
-//     delete[] i420_buffer;
+    delete[] i420_buffer;
   return true;
 }
 
@@ -726,7 +741,7 @@ void OhosCamera::RunRenderProcess()
         }
         if (ohos_render_)
         {
-            int width = 1920, height = 1080;
+            int width = 1080, height = 1920;
             //ohos_render_->OnFrame(data, width, height, width * 4, width * height * 4);
             ohos_render_->OnFrame(data, width, height, width, width * height * 3 / 2);
             delete[] data;
