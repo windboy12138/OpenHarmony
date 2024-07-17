@@ -33,6 +33,8 @@ namespace ohos {
 
 std::queue<VideoFrame *> buffers_;
 std::mutex render_lock;
+static uint32_t request_width_ = 1440;
+static uint32_t request_height_ = 1080;
 void *RnederProcess(void *args) {
 	OhosCamera *context = reinterpret_cast<OhosCamera *>(args);
 	context->RunRenderProcess();
@@ -265,7 +267,7 @@ int32_t OhosCamera::InitCamera() {
 		int width = camera_output_capability_->previewProfiles[i]->size.width;
 		int height = camera_output_capability_->previewProfiles[i]->size.height;
 		Camera_Format format = camera_output_capability_->previewProfiles[i]->format;
-		if (width == 1920 && height == 1080 && format == CAMERA_FORMAT_YUV_420_SP) {
+		if (width == request_width_ && height == request_height_ && format == CAMERA_FORMAT_YUV_420_SP) {
 			profile_index_ = i;
 		}
 		OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest",

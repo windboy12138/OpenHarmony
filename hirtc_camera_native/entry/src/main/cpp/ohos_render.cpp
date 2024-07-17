@@ -94,6 +94,9 @@ void OnSurfaceCreatedCB(OH_NativeXComponent *component, void *window) {
 	auto context = PluginManager::GetInstance();
 	context->SetNativeWindow(id, nativeWindow);
 	OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "OnSurfaceCreatedCB, id=%{public}s", id.c_str());
+    
+    int32_t ret = OH_NativeWindow_NativeWindowSetScalingModeV2(nativeWindow, OH_SCALING_MODE_SCALE_FIT_V2);
+    OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "OH_NativeWindow_NativeWindowSetScalingModeV2=%{public}d", ret);
 }
 void OnSurfaceChangedCB(OH_NativeXComponent *component, void *window) {
 	// 可获取 OHNativeWindow 实例
@@ -178,21 +181,10 @@ void ohosRender::OnFrame(uint8_t *data, int width, int height, int stride, int s
 	OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest",
 				 "OnFrame::buffer width=%{public}d, height=%{public}d, stride=%{public}d, size=%{public}d",
 				 bufferHandle->width, bufferHandle->height, bufferHandle->stride, bufferHandle->size);
-
-	//         static uint32_t value = 0x00CBC0FF;
-	//         value++;
-	//         uint32_t *pixel = static_cast<uint32_t *>(mappedAddr); // 使用mmap获取到的地址来访问内存
-	//         for (uint32_t x = 0; x < width; x++) {
-	//             for (uint32_t y = 0;  y < height; y++) {
-	//                 *pixel++ = value;
-	//             }
-	//         }
+    
 	uint8_t *pixel = static_cast<uint8_t *>(mappedAddr);
 	uint8_t *src_data = static_cast<uint8_t *>(data);
-	//         for (uint32_t i = 0; i < size; i++)
-	//         {
-	//             *pixel++ = *src_data++;
-	//         }
+
 	int byte_align = bufferHandle->stride - stride;
 	for (uint32_t i = 0; i < height; i++) {
 		uint8_t *pos = pixel + i * bufferHandle->stride;
@@ -200,19 +192,27 @@ void ohosRender::OnFrame(uint8_t *data, int width, int height, int stride, int s
 			*pos++ = *src_data++;
 		}
 	}
+#if 1
+    for (uint32_t i = 0; i < height / 2; i++) {
+        uint8_t *pos = pixel + (i + height) * bufferHandle->stride;
+        for (uint32_t j = 0; j < stride; j++) {
+            *pos++ = *src_data++;
+        }
+    }
+#else
+    for (uint32_t i = 0; i < height / 2; i++) {
+        uint8_t *pos = pixel + (i + height) * bufferHandle->stride;
+        for (uint32_t j = 0; j < stride / 2; j++) {
+            *pos++ = *src_data++;
+        }
+        pos += byte_align / 2;
+        for (uint32_t j = 0; j < stride / 2; j++) {
+            *pos++ = *src_data++;
+        }
+    }
+#endif
 
-	for (uint32_t i = 0; i < height / 2; i++) {
-		uint8_t *pos = pixel + (i + height) * bufferHandle->stride;
-		for (uint32_t j = 0; j < stride / 2; j++) {
-			*pos++ = *src_data++;
-		}
-		pos += byte_align / 2;
-		for (uint32_t j = 0; j < stride / 2; j++) {
-			*pos++ = *src_data++;
-		}
-	}
-
-	// 设置刷新区域，如果Region中的Rect为nullptr,或者rectNumber为0，则认为OHNativeWindowBuffer全部有内容更改。
+    // 设置刷新区域，如果Region中的Rect为nullptr,或者rectNumber为0，则认为OHNativeWindowBuffer全部有内容更改。
 	Region region{nullptr, 0};
 	// 通过OH_NativeWindow_NativeWindowFlushBuffer 提交给消费者使用，例如：显示在屏幕上。
 	OH_NativeWindow_NativeWindowFlushBuffer(native_window_, buffer, fenceFd, region);
@@ -239,7 +239,7 @@ void ohosRender::ReConfigure() {
 	if (orientation_ == 90) {
 		transform = NATIVEBUFFER_ROTATE_270;
 	} else if (orientation_ == 270) {
-		transform = NATIVEBUFFER_ROTATE_90;
+		transform = NATIVEBUFFER_FLIP_V_ROT90;
 	}
 	// if mirror, use NATIVEBUFFER_FLIP_V_ROT90
 	ret = OH_NativeWindow_NativeWindowHandleOpt(native_window_, code, transform);
