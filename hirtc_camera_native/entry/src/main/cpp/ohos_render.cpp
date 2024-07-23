@@ -192,7 +192,7 @@ void ohosRender::OnFrame(uint8_t *data, int width, int height, int stride, int s
 			*pos++ = *src_data++;
 		}
 	}
-#if 1
+#if 0
     for (uint32_t i = 0; i < height / 2; i++) {
         uint8_t *pos = pixel + (i + height) * bufferHandle->stride;
         for (uint32_t j = 0; j < stride; j++) {

@@ -6,6 +6,7 @@
 // #include "ohos_camera_capture.h"
 #include "ohos_camera.h"
 #include "ohos_render.h"
+#include "ohos_audio.h"
 
 #include <arm-linux-ohos/bits/alltypes.h>
 #include <multimedia/image_framework/image_mdk.h>
@@ -28,6 +29,7 @@ static napi_value InitCamera(napi_env env, napi_callback_info info) {
 static napi_value StopCamera(napi_env env, napi_callback_info info) {
     webrtc::ohos::GlobalOHOSCamera::GetInstance().GetOhosCamera()->StopCamera();
     webrtc::ohos::GlobalOHOSCamera::GetInstance().GetOhosCamera()->CameraRelease();
+    
     return nullptr;
 }
 
@@ -44,6 +46,21 @@ static napi_value ChangeCamera(napi_env env, napi_callback_info info) {
     return nullptr;
 }
 
+static napi_value StartRecord(napi_env env, napi_callback_info info) {
+    StartAudioReocrd();
+    return nullptr;
+}
+
+static napi_value StopAudio(napi_env env, napi_callback_info info) {
+    StopAudio();
+    return nullptr;
+}
+
+static napi_value StartPlay(napi_env env, napi_callback_info info) {
+    StartAudioPlay();
+    return nullptr;
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, "mytest", "Init begins");
@@ -56,6 +73,9 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"initCamera", nullptr, InitCamera, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"stopCamera", nullptr, StopCamera, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"changeCamera", nullptr, ChangeCamera, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"startRecord", nullptr, StartRecord, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"stopAudio", nullptr, StopAudio, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"startPlay", nullptr, StartPlay, nullptr, nullptr, nullptr, napi_default, nullptr},
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     // render

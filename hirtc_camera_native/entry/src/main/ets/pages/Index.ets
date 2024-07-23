@@ -6,6 +6,10 @@ import common from '@ohos.app.ability.common'
 import { Permissions } from '@ohos.abilityAccessCtrl'
 import camera from '@ohos.multimedia.camera';
 
+import fs from '@ohos.file.fs';
+let dirPath = "/data/storage/el2/base/haps/entry/files_wav";
+fs.mkdir(dirPath);
+
 @Entry
 @Component
 struct Index {
@@ -57,7 +61,7 @@ struct Index {
               //this.mXComponentController.setXComponentSurfaceSize({ surfaceWidth: 360, surfaceHeight: 640 });
             })
         }.width('50%')
-      }.position({x:0, y:260})
+      }.position({x:0, y:320})
       Row() {
         Column() {
           Button("start")
@@ -104,6 +108,41 @@ struct Index {
         .layoutWeight(1)
       }
       .position({x:0, y:20})
+      .layoutWeight(100)
+      Row() {
+        Column() {
+          Button("Record")
+            .width(100)
+            .height(100)
+            .onClick(() => {
+              abilityAccessCtrl.createAtManager()
+                .requestPermissionsFromUser(getContext(), ['ohos.permission.MICROPHONE'])
+                .then(async () => {
+                  testNapi.startRecord();
+                })
+            })
+        }
+        .layoutWeight(1)
+        Column() {
+          Button("Stop")
+            .width(100)
+            .height(100)
+            .onClick(() => {
+              testNapi.stopAudio();
+            })
+        }
+        .layoutWeight(1)
+        Column() {
+          Button("Play")
+            .width(100)
+            .height(100)
+            .onClick(() => {
+              testNapi.startPlay();
+            })
+        }
+        .layoutWeight(1)
+      }
+      .position({x:0, y:150})
       .layoutWeight(100)
     }
     .height('100%')
